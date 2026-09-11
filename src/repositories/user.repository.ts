@@ -1,8 +1,6 @@
-export const findUserById = async (id: number) => {
-  const response = await fetch(
-    `https://jsonplaceholder.typicode.com/users/${id}`,
-  );
-  const user = await response.json();
+import pool from "../database/connection.js";
 
-  return user;
+export const findUserById = async (id: number) => {
+  const [rows] = await pool.query("SELECT * FROM users WHERE id = ?", [id]);
+  return rows;
 };
