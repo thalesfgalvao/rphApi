@@ -4,6 +4,7 @@ import {
   getUserByNick,
   getUserByEmail,
 } from "../repositories/user.repository.js";
+import argon2 from "argon2";
 
 export const getUserByIdService = async (id: number) => {
   const user = await getUserById(id);
@@ -35,7 +36,8 @@ export const createUserService = async (
       message: "Sua senha precisa ter pelo menos 6 caracteres.",
     };
   }
-  await createUser(nick, email, password);
+  const hashedPassword = await argon2.hash(password);
+  await createUser(nick, email, hashedPassword);
   return {
     success: true,
     message: `O usuário ${nick} foi criado com êxito.`,
