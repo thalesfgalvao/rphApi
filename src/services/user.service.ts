@@ -30,12 +30,6 @@ export const createUserService = async (
       message: "Já existe um usuário com este email.",
     };
   }
-  if (password.length < 6) {
-    return {
-      success: false,
-      message: "Sua senha precisa ter pelo menos 6 caracteres.",
-    };
-  }
   const hashedPassword = await argon2.hash(password);
   await createUser(nick, email, hashedPassword);
   return {
