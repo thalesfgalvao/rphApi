@@ -1,3 +1,4 @@
+import { createUserSchema } from "../schemas/user.schema.js";
 import { type Request, type Response } from "express";
 import {
   getUserByIdService,
@@ -11,11 +12,19 @@ export const getUserByIdController = async (req: Request, res: Response) => {
 };
 
 export const createUserController = async (req: Request, res: Response) => {
-  const { nick, email, password } = req.body;
-  const result = await createUserService(nick, email, password);
+  const result = createUserSchema.safeParse(req.body);
 
   if (!result.success) {
-    return res.status(409).json(result);
+    return res.status(400).json({
+      message: "Dados inválidos",
+      errors: result.error.issues.map((error) => ({
+        field: error.path[0],
+        message: error.message,
+      })),
+    });
   }
-  return res.status(201).json(result);
+
+  const { nick, email, password } = result.data;
+  const user = await createUserService(nick, email, password);
+  return res.status(201).json(user);
 };
