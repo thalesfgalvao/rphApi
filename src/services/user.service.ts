@@ -1,8 +1,9 @@
 import {
   getUserById,
   createUser,
+  existsUserByNick,
+  existsUserByEmail,
   getUserByNick,
-  getUserByEmail,
 } from "../repositories/user.repository.js";
 import argon2 from "argon2";
 
@@ -11,13 +12,24 @@ export const getUserByIdService = async (id: number) => {
   return user;
 };
 
+export const getUserByNickService = async (nick: string) => {
+  const [user] = await getUserByNick(nick);
+  if (!user) {
+    return {
+      success: false,
+      message: "Usuário não encontrado.",
+    };
+  }
+  return { success: true, user };
+};
+
 export const createUserService = async (
   nick: string,
   email: string,
   password: string,
 ) => {
-  const userNick = await getUserByNick(nick);
-  const userEmail = await getUserByEmail(email);
+  const userNick = await existsUserByNick(nick);
+  const userEmail = await existsUserByEmail(email);
   if (userNick.length > 0) {
     return {
       success: false,

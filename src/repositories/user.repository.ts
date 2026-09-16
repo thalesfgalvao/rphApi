@@ -11,13 +11,21 @@ export const getUserById = async (id: number) => {
 
 export const getUserByNick = async (nick: string) => {
   const [rows] = await pool.query<RowDataPacket[]>(
+    "SELECT nick, status FROM users WHERE nick = ?",
+    [nick],
+  );
+  return rows;
+};
+
+export const existsUserByNick = async (nick: string) => {
+  const [rows] = await pool.query<RowDataPacket[]>(
     "SELECT * FROM users WHERE nick = ?",
     [nick],
   );
   return rows;
 };
 
-export const getUserByEmail = async (email: string) => {
+export const existsUserByEmail = async (email: string) => {
   const [rows] = await pool.query<RowDataPacket[]>(
     "SELECT * FROM users WHERE email = ?",
     [email],
