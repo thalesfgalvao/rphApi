@@ -5,7 +5,7 @@ import {
   getUserByIdService,
   createUserService,
 } from "../services/user.service.js";
-const { success, badRequest, created } = http;
+const { success, badRequest, created, conflict } = http;
 export const getUserByIdController = async (req: Request, res: Response) => {
   const id = Number(req.params.id);
   const user = await getUserByIdService(id);
@@ -27,5 +27,9 @@ export const createUserController = async (req: Request, res: Response) => {
 
   const { nick, email, password } = result.data;
   const user = await createUserService(nick, email, password);
+
+  if (!user.success) {
+    return res.status(conflict).json(user);
+  }
   return res.status(created).json(user);
 };
