@@ -1,4 +1,6 @@
 import { getUserForLogin } from "../repositories/login.repository.js";
+import { randomBytes, createHash } from "node:crypto";
+import { deleteSessionByUserId, saveHashedToken } from "../repositories/session.repository.js";
 import argon2 from "argon2";
 
 export const getUserForLoginService = async (
@@ -27,8 +29,16 @@ export const getUserForLoginService = async (
     };
   }
 
+  const token = randomBytes(32).toString("hex");
+  const tokenHash = createHash("sha256").update(token).digest("hex");
+  const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
+
+  await deleteSessionByUserId(user.id);
+  await saveHashedToken(user.id, tokenHash, expiresAt);
+
   return {
     success: true,
     message: "Login realizado com sucesso.",
+    token,
   };
 };
