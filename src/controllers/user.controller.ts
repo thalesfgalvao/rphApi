@@ -24,7 +24,7 @@ export const getUserByNickController = async (req: Request, res: Response) => {
     });
   }
   const user = await getUserByNickService(nick);
-  return res.status(success).json(user);
+  return res.status(success).json(user.user);
 };
 
 export const createUserController = async (req: Request, res: Response) => {
