@@ -8,7 +8,7 @@ import {
 import argon2 from "argon2";
 
 export const getUserByIdService = async (id: number) => {
-  const user = await getUserById(id);
+  const [user] = await getUserById(id);
   return user;
 };
 

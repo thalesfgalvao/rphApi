@@ -6,7 +6,8 @@ import {
   createUserService,
   getUserByNickService,
 } from "../services/user.service.js";
-const { success, badRequest, created, conflict, notFound } = http;
+import { authMiddleware } from "../middlewares/auth.middleware.js";
+const { success, badRequest, created, conflict, notFound, unauthorized } = http;
 
 export const getUserByIdController = async (req: Request, res: Response) => {
   const id = Number(req.params.id);
@@ -23,7 +24,7 @@ export const getUserByNickController = async (req: Request, res: Response) => {
     });
   }
   const user = await getUserByNickService(nick);
-  return res.status(success).json(user);
+  return res.status(success).json(user.user);
 };
 
 export const createUserController = async (req: Request, res: Response) => {
@@ -46,4 +47,22 @@ export const createUserController = async (req: Request, res: Response) => {
     return res.status(conflict).json(user);
   }
   return res.status(created).json(user);
+};
+
+export const getAuthenticatedUserController = async (
+  req: Request,
+  res: Response,
+) => {
+  const userId = req.userId;
+  if (!userId) {
+    return res.status(unauthorized).json({
+      success: false,
+      message: "Não autorizado.",
+    });
+  }
+  const user = await getUserByIdService(userId);
+  return res.status(success).json({
+    success: true,
+    user,
+  });
 };
