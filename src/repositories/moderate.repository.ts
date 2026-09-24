@@ -9,7 +9,7 @@ export const getPendingUsers = async () => {
     WHERE status = "pending";
     `,
   );
-  return rows;
+  return [rows];
 };
 
 export const activateUser = async (id: number) => {
