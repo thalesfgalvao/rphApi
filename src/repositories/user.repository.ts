@@ -4,10 +4,13 @@ import pool from "../database/connection.js";
 export const getUserById = async (id: number) => {
   const [rows] = await pool.query<RowDataPacket[]>(
     `SELECT users.id, users.nick, users.status, users.roleId, users.isAccountActive,
-      police_records.positionId, police_records.identification, police_records.updatedAt, police_records.updatedBy
+      police_records.positionId, police_records.identification, police_records.updatedAt, police_records.updatedBy,
+      positions.positionLevel, positions.corps
       FROM users
         LEFT JOIN police_records 
-      ON police_records.userId = users.id
+          ON police_records.userId = users.id
+        LEFT JOIN positions
+          ON positions.id = police_records.positionId
       WHERE users.id = ?`,
     [id],
   );
