@@ -1,7 +1,10 @@
 import { z } from "zod";
 
 export const createUserSchema = z.object({
-  nick: z.string().min(2, "O nick deve possuir pelo menos 2 caracteres"),
+  nick: z
+    .string()
+    .min(2, "O nick deve possuir pelo menos 2 caracteres")
+    .regex(/^\S+$/, "O nick não pode conter espaços."),
 
   email: z.string().email("Informe um email válido"),
 
