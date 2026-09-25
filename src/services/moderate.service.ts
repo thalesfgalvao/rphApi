@@ -56,7 +56,7 @@ export const deactivateUserService = async (
       message: "Usuário não encontrado.",
     };
   }
-  if (!user.isAccountActive && user.status !== "active") {
+  if (!user.isAccountActive && user.status === "suspended") {
     return {
       success: false,
       message: "Este usuário já foi desativado.",
