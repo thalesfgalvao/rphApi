@@ -3,21 +3,21 @@ import {
   approveRequirement,
   updatePoliceRecords,
   createRequirement,
-  getRequirement,
-  getRequirementById,
+  getAllRequirements,
   getPositionByLevelAndCorps,
   getTagByUserId,
+  getRequirementByUserId,
 } from "../repositories/requirements.repository.js";
 import { getUserById } from "../repositories/user.repository.js";
 import { formatIdentificationDate } from "../utils/date.js";
 
-export const getRequerimentService = async (targetUserId: number) => {
-  const response = await getRequirement(targetUserId);
+export const getAllRequirementsService = async () => {
+  const response = await getAllRequirements();
   return response;
 };
 
-export const getRequirementByIdService = async (id: number) => {
-  const [response] = await getRequirementById(id);
+export const getRequirementByUserIdService = async (id: number) => {
+  const response = await getRequirementByUserId(id);
   return response;
 };
 
@@ -25,7 +25,7 @@ export const approveRequirementService = async (
   id: number,
   approvedBy: number,
 ) => {
-  const [requirementResult] = await getRequirementById(id);
+  const [requirementResult] = await getRequirementByUserId(id);
   if (!requirementResult) {
     return {
       success: false,

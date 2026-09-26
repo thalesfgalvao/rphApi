@@ -6,6 +6,7 @@ import {
   getPendingUsersController,
 } from "../controllers/moderate.controller.js";
 import { moderatorMiddleware } from "../middlewares/moderate.middleware.js";
+import { getAllUsersController } from "../controllers/user.controller.js";
 
 const router = Router();
 
@@ -14,6 +15,12 @@ router.get(
   authMiddleware,
   moderatorMiddleware,
   getPendingUsersController,
+);
+router.get(
+  "/moderate/users",
+  authMiddleware,
+  moderatorMiddleware,
+  getAllUsersController,
 );
 router.patch(
   "/moderate/:id/approveUser",

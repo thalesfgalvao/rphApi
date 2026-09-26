@@ -1,7 +1,7 @@
 import {
-  getRequerimentService,
+  getAllRequirementsService,
   createRequirementService,
-  getRequirementByIdService,
+  getRequirementByUserIdService,
   approveRequirementService,
   updatePoliceRecordsService,
 } from "../services/requeriments.service.js";
@@ -10,18 +10,28 @@ import { http } from "../constants/httpStatus.js";
 
 const { success, unauthorized } = http;
 
-export const getRequerimentController = async (req: Request, res: Response) => {
-  const targetUserId = Number(req.params.targetUserId);
-  const response = await getRequerimentService(targetUserId);
-  return res.status(success).json(response);
-};
-
-export const getRequirementByIdController = async (
+export const getAllRequirementsController = async (
   req: Request,
   res: Response,
 ) => {
+  const response = await getAllRequirementsService();
+  return res.status(success).json(response);
+};
+
+export const getRequirementByUserIdController = async (
+  req: Request,
+  res: Response,
+) => {
+  console.log("PARAMS:", req.params);
+
   const id = Number(req.params.id);
-  const response = await getRequirementByIdService(id);
+
+  console.log("ID:", id);
+
+  const response = await getRequirementByUserIdService(id);
+
+  console.log("RESPONSE:", response);
+
   return res.status(success).json(response);
 };
 

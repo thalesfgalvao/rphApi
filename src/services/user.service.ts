@@ -4,8 +4,14 @@ import {
   existsUserByNick,
   existsUserByEmail,
   getUserByNick,
+  getAllUsers,
 } from "../repositories/user.repository.js";
 import argon2 from "argon2";
+
+export const getAllUsersService = async () => {
+  const [users] = await getAllUsers();
+  return users;
+};
 
 export const getUserByIdService = async (id: number) => {
   const [user] = await getUserById(id);

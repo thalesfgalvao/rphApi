@@ -1,6 +1,25 @@
 import { type RowDataPacket } from "mysql2";
 import pool from "../database/connection.js";
 
+export const getAllUsers = async () => {
+  const [rows] = await pool.query<RowDataPacket[]>(
+    `SELECT users.id, users.nick, users.status, users.roleId, users.isAccountActive,
+            MAX(user_movements.updatedAt) AS lastMovementAt
+      FROM users
+        LEFT JOIN user_movements
+          ON user_movements.targetUserId = users.id
+      GROUP BY
+        users.id,
+        users.nick,
+        users.status,
+        users.roleId,
+        users.isAccountActive
+      ORDER BY users.id ASC
+    `,
+  );
+  return [rows];
+};
+
 export const getUserById = async (id: number) => {
   const [rows] = await pool.query<RowDataPacket[]>(
     `SELECT users.id, users.nick, users.status, users.roleId, users.isAccountActive,
