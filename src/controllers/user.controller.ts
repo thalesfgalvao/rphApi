@@ -5,9 +5,14 @@ import {
   getUserByIdService,
   createUserService,
   getUserByNickService,
+  getAllUsersService,
 } from "../services/user.service.js";
-import { authMiddleware } from "../middlewares/auth.middleware.js";
 const { success, badRequest, created, conflict, notFound, unauthorized } = http;
+
+export const getAllUsersController = async (req: Request, res: Response) => {
+  const users = await getAllUsersService();
+  return res.status(success).json(users);
+};
 
 export const getUserByIdController = async (req: Request, res: Response) => {
   const id = Number(req.params.id);
