@@ -80,7 +80,6 @@ export const rejectRequirementController = async (
       message: "Não autorizado.",
     });
   }
-
   const response = await rejectRequirementService(
     approvedBy,
     reviewed,

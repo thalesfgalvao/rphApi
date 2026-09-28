@@ -51,15 +51,9 @@ export const approveRequirementService = async (
       message: "Este requerimento já foi avaliado.",
     };
   }
-
-  if (requirement.type === "promocao" || requirement.type === "rebaixamento") {
-    await approveRequirement(approvedBy, reviewed, reasonApproval, id);
-    const relatedRequirementId = Number(requirement.id);
-    await updatePoliceRecordsService(relatedRequirementId);
-  }
-  if (requirement.type === "rebaixamento") {
-    await approveRequirement(approvedBy, reviewed, reasonApproval, id);
-  }
+  await approveRequirement(approvedBy, reviewed, reasonApproval, id);
+  const relatedRequirementId = Number(requirement.id);
+  await updatePoliceRecordsService(relatedRequirementId);
   return {
     success: true,
     message: "Requerimento aprovado com sucesso.",
@@ -79,7 +73,6 @@ export const rejectRequirementService = async (
       message: "Requerimento não encontrado.",
     };
   }
-
   if (requirement.status !== "pending") {
     return {
       success: false,
@@ -87,9 +80,7 @@ export const rejectRequirementService = async (
     };
   }
 
-  if (requirement.type === "promocao" || requirement.type === "rebaixamento") {
-    await rejectRequirement(approvedBy, reviewed, reasonApproval, id);
-  }
+  await rejectRequirement(approvedBy, reviewed, reasonApproval, id);
   return {
     success: true,
     message: "Requerimento rejeitado com sucesso.",
@@ -115,7 +106,6 @@ export const createRequirementService = async (
     );
   }
 
-  // continua aqui e cria o requirement
   let identification = "Nick [TAG] DD MM AAAA";
   if (!targetUser) {
     return {
@@ -203,7 +193,6 @@ export const createRequirementService = async (
   }
 
   if (type === "rebaixamento") {
-    console.log("Rebaixamento entrou");
     if (
       requestedByUser.corps !== "special" &&
       targetUser.positionLevel >= requestedByUser.positionLevel
@@ -232,6 +221,37 @@ export const createRequirementService = async (
     identification = `${targetUser.nick} [R/${requestedByUser.tag}] ${formattedData}`;
     oldPosition = targetUser.positionId;
     newPosition = previousPosition.id;
+  }
+  if (type === "reforma" && requestedByUser.id === targetUser.id) {
+    let date = new Date();
+    let formattedData = formatIdentificationDate(date);
+    identification = `${requestedByUser.nick} [---] ${formattedData}`;
+    oldPosition = requestedByUser.positionId;
+    newPosition = 135;
+    let reformaReason = `Eu, ${requestedByUser.position} ${requestedByUser.nick}, detentor(a) da TAG [${requestedByUser.tag}], venho solicitar o meu desligamento honroso devido a ${reason}. Resguardo meu direito de poder retornar a RPH no futuro sem impedimentos.`;
+    reason = `${reformaReason}`;
+  }
+  if (type === "reforma" && requestedByUser.id !== targetUser.id) {
+    let date = new Date();
+    let formattedData = formatIdentificationDate(date);
+    identification = `${targetUser.nick} [---] ${formattedData}`;
+    oldPosition = targetUser.positionId;
+    newPosition = 135;
+    let reformaReason = `Eu, ${requestedByUser.position} ${requestedByUser.nick}, detentor(a) da TAG [${requestedByUser.tag}], venho solicitar a reforma do(a) ${targetUser.position} ${targetUser.nick}, detentor da TAG [${targetUser.tag}] sob seu pedido.`;
+    reason = `${reformaReason}`;
+  }
+
+  if (type === "demissao" && requestedByUser.id !== targetUser.id) {
+    const date = new Date();
+    const formattedData = formatIdentificationDate(date);
+
+    identification = `${targetUser.nick} [---] ${formattedData}`;
+    oldPosition = targetUser.positionId;
+    newPosition = 133;
+
+    const demissaoReason = `Eu, ${requestedByUser.position} ${requestedByUser.nick}, detentor(a) da TAG [${requestedByUser.tag}], venho solicitar o desligamento desonroso do(a) ${targetUser.position} ${targetUser.nick}, detentor da TAG [${targetUser.tag}] devido ao motivo ${reason}. Resguardo seu direito de poder retornar a RPH no futuro sem impedimentos.`;
+
+    reason = demissaoReason;
   }
   await createRequirement(
     targetUserId,
