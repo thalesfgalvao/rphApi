@@ -6,6 +6,7 @@ import {
   getRequirementById,
   approveRequirement,
   getPositionByLevelAndCorps,
+  rejectRequirement,
 } from "../repositories/requirements.repository.js";
 import { getUserById } from "../repositories/user.repository.js";
 import { formatIdentificationDate } from "../utils/date.js";
@@ -62,6 +63,36 @@ export const approveRequirementService = async (
   return {
     success: true,
     message: "Requerimento aprovado com sucesso.",
+  };
+};
+
+export const rejectRequirementService = async (
+  approvedBy: number,
+  reviewed: Date,
+  reasonApproval: string,
+  id: number,
+) => {
+  const [requirement] = await getRequirementById(id);
+  if (!requirement) {
+    return {
+      success: false,
+      message: "Requerimento não encontrado.",
+    };
+  }
+
+  if (requirement.status !== "pending") {
+    return {
+      success: false,
+      message: "Este requerimento já foi avaliado.",
+    };
+  }
+
+  if (requirement.type === "promocao" || requirement.type === "rebaixamento") {
+    await rejectRequirement(approvedBy, reviewed, reasonApproval, id);
+  }
+  return {
+    success: true,
+    message: "Requerimento rejeitado com sucesso.",
   };
 };
 
@@ -165,7 +196,7 @@ export const createRequirementService = async (
 
     let date = new Date();
     let formattedData = formatIdentificationDate(date);
-    
+
     identification = `${targetUser.nick} [${requestedByUser.tag}] ${formattedData}`;
     oldPosition = targetUser.positionId;
     newPosition = nextPosition.id;

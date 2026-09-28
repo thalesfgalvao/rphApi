@@ -184,3 +184,22 @@ export const approveRequirement = async (
 
   return result;
 };
+
+export const rejectRequirement = async (
+  approvedBy: number,
+  reviewed: Date,
+  reasonApproval: string,
+  id: number,
+) => {
+  const [result] = await pool.execute<ResultSetHeader>(
+    `UPDATE requirements
+     SET status = 'rejected',
+         approvedBy = ?,
+         reviewed = ?,
+         reasonApproval = ?
+     WHERE id = ?`,
+    [approvedBy, reviewed, reasonApproval, id],
+  );
+
+  return result;
+};

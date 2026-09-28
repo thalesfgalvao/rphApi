@@ -5,6 +5,7 @@ import {
   getAllRequirementsController,
   getRequirementByIdController,
   getRequirementByUserIdController,
+  rejectRequirementController,
 } from "../controllers/requirements.controller.js";
 import { authMiddleware } from "../middlewares/auth.middleware.js";
 const router = Router();
@@ -20,6 +21,11 @@ router.patch(
   "/requirements/:id/approve",
   authMiddleware,
   approveRequirementController,
+);
+router.patch(
+  "/requirements/:id/reject",
+  authMiddleware,
+  rejectRequirementController,
 );
 router.post("/requirements", authMiddleware, createRequirementController);
 
