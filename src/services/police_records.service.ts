@@ -2,10 +2,10 @@ import {
   createPoliceRecords,
   getPoliceRecords,
   getPoliceRecordsByUserId,
+  updatePoliceRecords,
 } from "../repositories/police_records.repository.js";
 import {
   getRequirementById,
-  updatePoliceRecords,
 } from "../repositories/requirements.repository.js";
 
 export const getPoliceRecordsService = async () => {

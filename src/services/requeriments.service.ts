@@ -1,14 +1,20 @@
+import { updatePoliceRecords } from "../repositories/police_records.repository.js";
 import {
-  updatePoliceRecords,
   createRequirement,
   getAllRequirements,
   getRequirementByUserId,
   getRequirementById,
   approveRequirement,
   getPositionByLevelAndCorps,
+  rejectRequirement,
 } from "../repositories/requirements.repository.js";
 import { getUserById } from "../repositories/user.repository.js";
 import { formatIdentificationDate } from "../utils/date.js";
+import {
+  createPoliceRecordsService,
+  getPoliceRecordsByUserIdService,
+  updatePoliceRecordsService,
+} from "./police_records.service.js";
 
 export const getAllRequirementsService = async () => {
   const response = await getAllRequirements();
@@ -32,7 +38,6 @@ export const approveRequirementService = async (
   id: number,
 ) => {
   const [requirement] = await getRequirementById(id);
-
   if (!requirement) {
     return {
       success: false,
@@ -47,32 +52,47 @@ export const approveRequirementService = async (
     };
   }
 
-  await approveRequirement(approvedBy, reviewed, reasonApproval, id);
+  if (requirement.type === "promocao" || requirement.type === "rebaixamento") {
+    await approveRequirement(approvedBy, reviewed, reasonApproval, id);
+    const relatedRequirementId = Number(requirement.id);
+    await updatePoliceRecordsService(relatedRequirementId);
+  }
+  if (requirement.type === "rebaixamento") {
+    await approveRequirement(approvedBy, reviewed, reasonApproval, id);
+  }
   return {
     success: true,
     message: "Requerimento aprovado com sucesso.",
   };
 };
 
-export const updatePoliceRecordsService = async (
-  positionId: number,
-  identification: string,
-  updatedAt: Date,
-  updatedBy: number,
-  relatedRequirementId: number,
-  userId: number,
+export const rejectRequirementService = async (
+  approvedBy: number,
+  reviewed: Date,
+  reasonApproval: string,
+  id: number,
 ) => {
-  await updatePoliceRecords(
-    positionId,
-    identification,
-    updatedAt,
-    updatedBy,
-    relatedRequirementId,
-    userId,
-  );
+  const [requirement] = await getRequirementById(id);
+  if (!requirement) {
+    return {
+      success: false,
+      message: "Requerimento não encontrado.",
+    };
+  }
+
+  if (requirement.status !== "pending") {
+    return {
+      success: false,
+      message: "Este requerimento já foi avaliado.",
+    };
+  }
+
+  if (requirement.type === "promocao" || requirement.type === "rebaixamento") {
+    await rejectRequirement(approvedBy, reviewed, reasonApproval, id);
+  }
   return {
     success: true,
-    message: "Police Records atualizado com sucesso.",
+    message: "Requerimento rejeitado com sucesso.",
   };
 };
 
@@ -82,7 +102,20 @@ export const createRequirementService = async (
   type: string,
   reason: string,
 ) => {
+  const policeRecords = await getPoliceRecordsByUserIdService(targetUserId);
   const [targetUser] = await getUserById(targetUserId);
+  if (!policeRecords.success) {
+    await createPoliceRecordsService(
+      targetUserId,
+      0,
+      "Nick [TAG] DD MM AAAA",
+      new Date(),
+      requestedBy,
+      0,
+    );
+  }
+
+  // continua aqui e cria o requirement
   let identification = "Nick [TAG] DD MM AAAA";
   if (!targetUser) {
     return {
@@ -163,12 +196,14 @@ export const createRequirementService = async (
 
     let date = new Date();
     let formattedData = formatIdentificationDate(date);
+
     identification = `${targetUser.nick} [${requestedByUser.tag}] ${formattedData}`;
     oldPosition = targetUser.positionId;
     newPosition = nextPosition.id;
   }
 
   if (type === "rebaixamento") {
+    console.log("Rebaixamento entrou");
     if (
       requestedByUser.corps !== "special" &&
       targetUser.positionLevel >= requestedByUser.positionLevel
@@ -193,7 +228,8 @@ export const createRequirementService = async (
 
     let date = new Date();
     let formattedData = formatIdentificationDate(date);
-    identification = `${targetUser.nick} [${requestedByUser.tag}] ${formattedData}`;
+
+    identification = `${targetUser.nick} [R/${requestedByUser.tag}] ${formattedData}`;
     oldPosition = targetUser.positionId;
     newPosition = previousPosition.id;
   }
