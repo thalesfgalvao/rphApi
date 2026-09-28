@@ -3,7 +3,6 @@ import {
   createRequirementService,
   getRequirementByUserIdService,
   approveRequirementService,
-  updatePoliceRecordsService,
   getRequirementByIdService,
 } from "../services/requeriments.service.js";
 import { type Response, type Request } from "express";
@@ -65,38 +64,11 @@ export const approveRequirementController = async (
   return res.status(success).json(response);
 };
 
-export const updatePoliceRecordsController = async (
-  req: Request,
-  res: Response,
-) => {
-  const {
-    positionId,
-    identification,
-    updatedAt,
-    updatedBy,
-    relatedRequirementId,
-    userId,
-  } = req.body;
-  const response = await updatePoliceRecordsService(
-    positionId,
-    identification,
-    updatedAt,
-    updatedBy,
-    relatedRequirementId,
-    userId,
-  );
-  return res.status(success).json(response);
-};
-
 export const createRequirementController = async (
   req: Request,
   res: Response,
 ) => {
-  const {
-    targetUserId,
-    type,
-    reason,
-  } = req.body;
+  const { targetUserId, type, reason } = req.body;
   const requestedBy = req.userId;
 
   if (!requestedBy) {
