@@ -3,6 +3,7 @@ import {
   approveRequirementController,
   createRequirementController,
   getAllRequirementsController,
+  getRequirementByIdController,
   getRequirementByUserIdController,
 } from "../controllers/requirements.controller.js";
 import { authMiddleware } from "../middlewares/auth.middleware.js";
@@ -14,6 +15,7 @@ router.get(
   authMiddleware,
   getRequirementByUserIdController,
 );
+router.get("/requirement/:id", authMiddleware, getRequirementByIdController);
 router.patch(
   "/requirements/:id/approve",
   authMiddleware,

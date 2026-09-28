@@ -4,6 +4,7 @@ import {
   getRequirementByUserIdService,
   approveRequirementService,
   updatePoliceRecordsService,
+  getRequirementByIdService,
 } from "../services/requeriments.service.js";
 import { type Response, type Request } from "express";
 import { http } from "../constants/httpStatus.js";
@@ -22,16 +23,18 @@ export const getRequirementByUserIdController = async (
   req: Request,
   res: Response,
 ) => {
-  console.log("PARAMS:", req.params);
-
   const id = Number(req.params.id);
-
-  console.log("ID:", id);
-
   const response = await getRequirementByUserIdService(id);
 
-  console.log("RESPONSE:", response);
+  return res.status(success).json(response);
+};
 
+export const getRequirementByIdController = async (
+  req: Request,
+  res: Response,
+) => {
+  const id = Number(req.params.id);
+  const response = await getRequirementByIdService(id);
   return res.status(success).json(response);
 };
 
@@ -39,8 +42,11 @@ export const approveRequirementController = async (
   req: Request,
   res: Response,
 ) => {
+  console.log("0 - entrou no controller");
   const id = Number(req.params.id);
   const approvedBy = req.userId;
+  const reasonApproval = "Requerimento de acordo.";
+  const reviewed = new Date();
 
   if (!approvedBy) {
     return res.status(unauthorized).json({
@@ -49,7 +55,12 @@ export const approveRequirementController = async (
     });
   }
 
-  const response = await approveRequirementService(id, approvedBy);
+  const response = await approveRequirementService(
+    approvedBy,
+    reviewed,
+    reasonApproval,
+    id,
+  );
 
   return res.status(success).json(response);
 };
@@ -81,7 +92,11 @@ export const createRequirementController = async (
   req: Request,
   res: Response,
 ) => {
-  const { targetUserId, type, reason } = req.body;
+  const {
+    targetUserId,
+    type,
+    reason,
+  } = req.body;
   const requestedBy = req.userId;
 
   if (!requestedBy) {

@@ -1,12 +1,11 @@
-import { is } from "zod/locales";
 import {
-  approveRequirement,
   updatePoliceRecords,
   createRequirement,
   getAllRequirements,
-  getPositionByLevelAndCorps,
-  getTagByUserId,
   getRequirementByUserId,
+  getRequirementById,
+  approveRequirement,
+  getPositionByLevelAndCorps,
 } from "../repositories/requirements.repository.js";
 import { getUserById } from "../repositories/user.repository.js";
 import { formatIdentificationDate } from "../utils/date.js";
@@ -21,68 +20,34 @@ export const getRequirementByUserIdService = async (id: number) => {
   return response;
 };
 
+export const getRequirementByIdService = async (id: number) => {
+  const [response] = await getRequirementById(id);
+  return response;
+};
+
 export const approveRequirementService = async (
-  id: number,
   approvedBy: number,
+  reviewed: Date,
+  reasonApproval: string,
+  id: number,
 ) => {
-  const [requirementResult] = await getRequirementByUserId(id);
-  if (!requirementResult) {
+  const [requirement] = await getRequirementById(id);
+
+  if (!requirement) {
     return {
       success: false,
       message: "Requerimento não encontrado.",
     };
   }
-  if (requirementResult.status !== "pending") {
+
+  if (requirement.status !== "pending") {
     return {
       success: false,
-      message: "O requerimento já foi analisado.",
+      message: "Este requerimento já foi avaliado.",
     };
   }
-  let newPositionLevel = requirementResult.positionLevel;
 
-  if (requirementResult.type === "promocao") {
-    newPositionLevel += 1;
-  }
-
-  if (requirementResult.type === "rebaixamento") {
-    newPositionLevel -= 1;
-  }
-  const [newPosition] = await getPositionByLevelAndCorps(
-    newPositionLevel,
-    requirementResult.corps,
-  );
-  if (!newPosition) {
-    return {
-      success: false,
-      message: "Não foi encontrado um cargo válido para esta movimentação.",
-    };
-  }
-  const formattedDate = formatIdentificationDate(requirementResult.createdAt);
-  const [tagResult] = await getTagByUserId(requirementResult.requestedBy);
-
-  if (!tagResult) {
-    return {
-      success: false,
-      message: "O autor do requerimento não possui uma TAG.",
-    };
-  }
-  let identificationTag = tagResult.tag;
-
-  if (requirementResult.type === "rebaixamento") {
-    identificationTag = `R/${tagResult.tag}`;
-  }
-
-  const identification = `${requirementResult.nick} [${identificationTag}] ${formattedDate}`;
-  await updatePoliceRecords(
-    newPosition.id,
-    identification,
-    requirementResult.createdAt,
-    requirementResult.requestedBy,
-    requirementResult.id,
-    requirementResult.targetUserId,
-  );
-  const reviewed = new Date();
-  await approveRequirement(approvedBy, reviewed, requirementResult.id);
+  await approveRequirement(approvedBy, reviewed, reasonApproval, id);
   return {
     success: true,
     message: "Requerimento aprovado com sucesso.",
@@ -118,6 +83,7 @@ export const createRequirementService = async (
   reason: string,
 ) => {
   const [targetUser] = await getUserById(targetUserId);
+  let identification = "Nick [TAG] DD MM AAAA";
   if (!targetUser) {
     return {
       success: false,
@@ -143,6 +109,7 @@ export const createRequirementService = async (
       message: "Autor do requerimento não encontrado.",
     };
   }
+
   if (targetUserId === requestedBy && type !== "reforma") {
     return {
       success: false,
@@ -168,7 +135,78 @@ export const createRequirementService = async (
       }
     }
   }
-  await createRequirement(targetUserId, requestedBy, type, reason);
+  let oldPosition: number | null = null;
+  let newPosition: number | null = null;
+
+  if (type === "promocao") {
+    if (
+      requestedByUser.corps !== "special" &&
+      targetUser.positionLevel + 1 >= requestedByUser.positionLevel
+    ) {
+      return {
+        success: false,
+        message: "Essa ação só pode ser feita com subalternos.",
+      };
+    }
+
+    const [nextPosition] = await getPositionByLevelAndCorps(
+      targetUser.positionLevel + 1,
+      targetUser.corps,
+    );
+
+    if (!nextPosition) {
+      return {
+        success: false,
+        message: "Não existe um cargo disponível para esta promoção.",
+      };
+    }
+
+    let date = new Date();
+    let formattedData = formatIdentificationDate(date);
+    identification = `${targetUser.nick} [${requestedByUser.tag}] ${formattedData}`;
+    oldPosition = targetUser.positionId;
+    newPosition = nextPosition.id;
+  }
+
+  if (type === "rebaixamento") {
+    if (
+      requestedByUser.corps !== "special" &&
+      targetUser.positionLevel >= requestedByUser.positionLevel
+    ) {
+      return {
+        success: false,
+        message: "Essa ação só pode ser feita com subalternos.",
+      };
+    }
+
+    const [previousPosition] = await getPositionByLevelAndCorps(
+      targetUser.positionLevel - 1,
+      targetUser.corps,
+    );
+
+    if (!previousPosition) {
+      return {
+        success: false,
+        message: "Não existe um cargo disponível para este rebaixamento.",
+      };
+    }
+
+    let date = new Date();
+    let formattedData = formatIdentificationDate(date);
+    identification = `${targetUser.nick} [${requestedByUser.tag}] ${formattedData}`;
+    oldPosition = targetUser.positionId;
+    newPosition = previousPosition.id;
+  }
+  await createRequirement(
+    targetUserId,
+    requestedBy,
+    type,
+    reason,
+    oldPosition,
+    newPosition,
+    identification,
+  );
+
   return {
     success: true,
     message: "Requerimento criado com sucesso.",
