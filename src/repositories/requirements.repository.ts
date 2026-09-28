@@ -123,25 +123,6 @@ export const getTagByUserId = async (userId: number) => {
   return rows;
 };
 
-export const approveRequirement = async (
-  approvedBy: number,
-  reviewed: Date,
-  reasonApproval: string,
-  id: number,
-) => {
-  const [result] = await pool.execute<ResultSetHeader>(
-    `UPDATE requirements
-     SET status = 'approved',
-         approvedBy = ?,
-         reviewed = ?,
-         reasonApproval = ?
-     WHERE id = ?`,
-    [approvedBy, reviewed, reasonApproval, id],
-  );
-
-  return result;
-};
-
 export const getPositionByLevelAndCorps = async (
   positionLevel: number,
   corps: string,
@@ -160,7 +141,6 @@ export const getPositionByLevelAndCorps = async (
 };
 
 // POST: INSERT INTO TABLES
-
 export const createRequirement = async (
   targetUserId: number,
   requestedBy: number,
@@ -186,46 +166,21 @@ export const createRequirement = async (
 };
 
 //UPDATE: UPDATE TABLE
-export const updatePoliceRecords = async (
-  positionId: number,
-  identification: string,
-  updatedAt: Date,
-  updatedBy: number,
-  relatedRequirementId: number,
-  userId: number,
+export const approveRequirement = async (
+  approvedBy: number,
+  reviewed: Date,
+  reasonApproval: string,
+  id: number,
 ) => {
   const [result] = await pool.execute<ResultSetHeader>(
-    `INSERT INTO police_records
-      (
-        userId,
-        positionId,
-        identification,
-        updatedAt,
-        updatedBy,
-        relatedRequirementId
-      )
-      VALUES (?, ?, ?, ?, ?, ?)
-      ON DUPLICATE KEY UPDATE
-        positionId = ?,
-        identification = ?,
-        updatedAt = ?,
-        updatedBy = ?,
-        relatedRequirementId = ?
-    `,
-    [
-      userId,
-      positionId,
-      identification,
-      updatedAt,
-      updatedBy,
-      relatedRequirementId,
-
-      positionId,
-      identification,
-      updatedAt,
-      updatedBy,
-      relatedRequirementId,
-    ],
+    `UPDATE requirements
+     SET status = 'approved',
+         approvedBy = ?,
+         reviewed = ?,
+         reasonApproval = ?
+     WHERE id = ?`,
+    [approvedBy, reviewed, reasonApproval, id],
   );
+
   return result;
 };

@@ -5,6 +5,7 @@ import {
   approveRequirementService,
   getRequirementByIdService,
 } from "../services/requeriments.service.js";
+import { updatePoliceRecordsService } from "../services/police_records.service.js";
 import { type Response, type Request } from "express";
 import { http } from "../constants/httpStatus.js";
 
@@ -41,7 +42,6 @@ export const approveRequirementController = async (
   req: Request,
   res: Response,
 ) => {
-  console.log("0 - entrou no controller");
   const id = Number(req.params.id);
   const approvedBy = req.userId;
   const reasonApproval = "Requerimento de acordo.";
