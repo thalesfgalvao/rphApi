@@ -2,6 +2,7 @@ import { type Request, type Response, type NextFunction } from "express";
 import { http } from "../constants/httpStatus.js";
 import { createHash } from "node:crypto";
 import { getSessionByHashedToken } from "../repositories/session.repository.js";
+import { getUserById } from "../repositories/user.repository.js";
 
 export const authMiddleware = async (
   req: Request,
@@ -38,6 +39,14 @@ export const authMiddleware = async (
     return res.status(unauthorized).json({
       success: false,
       message: "Sua sessão expirou.",
+    });
+  }
+  const [user] = await getUserById(session.userId);
+
+  if (!user || !user.isAccountActive) {
+    return res.status(unauthorized).json({
+      success: false,
+      message: "Seu usuário está inativo ou não existe.",
     });
   }
   req.userId = session.userId;

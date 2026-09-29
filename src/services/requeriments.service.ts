@@ -254,6 +254,12 @@ export const createRequirementService = async (
 
     reason = demissaoReason;
   }
+  if(!requestedByUser.tag && type !== "reforma" && requestedByUser.id === targetUser.id){
+    return {
+      success: false,
+      message: "Você precisa de uma TAG ativa."
+    }
+  }
   await createRequirement(
     targetUserId,
     requestedBy,
