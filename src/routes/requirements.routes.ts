@@ -8,6 +8,7 @@ import {
   rejectRequirementController,
 } from "../controllers/requirements.controller.js";
 import { authMiddleware } from "../middlewares/auth.middleware.js";
+import { requireFlag } from "../middlewares/flag.middleware.js";
 const router = Router();
 
 router.get("/requirements", authMiddleware, getAllRequirementsController);
@@ -20,11 +21,13 @@ router.get("/requirement/:id", authMiddleware, getRequirementByIdController);
 router.patch(
   "/requirements/:id/approve",
   authMiddleware,
+  requireFlag("RH"),
   approveRequirementController,
 );
 router.patch(
   "/requirements/:id/reject",
   authMiddleware,
+  requireFlag("R. Humanos"),
   rejectRequirementController,
 );
 router.post("/requirements", authMiddleware, createRequirementController);
