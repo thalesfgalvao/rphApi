@@ -10,6 +10,7 @@ import {
 } from "../repositories/requirements.repository.js";
 import { getUserById } from "../repositories/user.repository.js";
 import { formatIdentificationDate } from "../utils/date.js";
+import { deactivateUserService } from "./moderate.service.js";
 import {
   createPoliceRecordsService,
   getPoliceRecordsByUserIdService,
@@ -262,6 +263,10 @@ export const createRequirementService = async (
     newPosition,
     identification,
   );
+
+  if (type === "demissao" || type === "reforma") {
+    await deactivateUserService(targetUserId, requestedBy, type);
+  }
 
   return {
     success: true,
