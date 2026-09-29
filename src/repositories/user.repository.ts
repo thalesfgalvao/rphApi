@@ -22,7 +22,8 @@ export const getAllUsers = async () => {
 
 export const getUserById = async (id: number) => {
   const [rows] = await pool.query<RowDataPacket[]>(
-    `SELECT users.id,
+    `SELECT
+      users.id,
       users.nick,
       users.status,
       users.roleId,
@@ -37,15 +38,25 @@ export const getUserById = async (id: number) => {
       positions.corps,
       positions.positionLevel,
 
-      tags.tag
+      tags.tag,
 
-    FROM users
-      LEFT JOIN police_records 
-        ON police_records.userId = users.id
-      LEFT JOIN positions
-        ON positions.id = police_records.positionId
-      LEFT JOIN tags
-        ON tags.userId = users.id
+      (
+        SELECT JSON_ARRAYAGG(flags.name)
+        FROM flags_users
+        INNER JOIN flags
+          ON flags.id = flags_users.flagId
+        WHERE flags_users.userId = users.id
+          AND flags.isActive = 1
+      ) AS flags
+
+      FROM users
+        LEFT JOIN police_records
+          ON police_records.userId = users.id
+        LEFT JOIN positions
+          ON positions.id = police_records.positionId
+        LEFT JOIN tags
+          ON tags.userId = users.id
+
       WHERE users.id = ?`,
     [id],
   );
@@ -54,7 +65,8 @@ export const getUserById = async (id: number) => {
 
 export const getUserByNick = async (nick: string) => {
   const [rows] = await pool.query<RowDataPacket[]>(
-    `SELECT users.id,
+    `SELECT
+      users.id,
       users.nick,
       users.status,
       users.roleId,
@@ -69,15 +81,25 @@ export const getUserByNick = async (nick: string) => {
       positions.corps,
       positions.positionLevel,
 
-      tags.tag
+      tags.tag,
 
-    FROM users
-      LEFT JOIN police_records 
-        ON police_records.userId = users.id
-      LEFT JOIN positions
-        ON positions.id = police_records.positionId
-      LEFT JOIN tags
-        ON tags.userId = users.id
+      (
+        SELECT JSON_ARRAYAGG(flags.name)
+        FROM flags_users
+        INNER JOIN flags
+          ON flags.id = flags_users.flagId
+        WHERE flags_users.userId = users.id
+          AND flags.isActive = 1
+      ) AS flags
+
+      FROM users
+        LEFT JOIN police_records
+          ON police_records.userId = users.id
+        LEFT JOIN positions
+          ON positions.id = police_records.positionId
+        LEFT JOIN tags
+          ON tags.userId = users.id
+
       WHERE users.nick = ?`,
     [nick],
   );
