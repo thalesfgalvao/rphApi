@@ -4,9 +4,7 @@ import {
   getPoliceRecordsByUserId,
   updatePoliceRecords,
 } from "../repositories/police_records.repository.js";
-import {
-  getRequirementById,
-} from "../repositories/requirements.repository.js";
+import { getRequirementById } from "../repositories/requirements.repository.js";
 
 export const getPoliceRecordsService = async () => {
   const response = await getPoliceRecords();

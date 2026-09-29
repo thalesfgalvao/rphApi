@@ -22,7 +22,7 @@ export const getAllUsers = async () => {
 
 export const getUserById = async (id: number) => {
   const [rows] = await pool.query<RowDataPacket[]>(
-    `SELECT users.id, users.nick, users.status, users.roleId, users.isAccountActive,
+    `SELECT police_records.userId, users.nick, users.status, users.roleId, users.isAccountActive,
       police_records.positionId, police_records.identification, police_records.updatedAt, police_records.updatedBy,
       positions.id, positions.name AS position, positions.corps, positions.positionLevel,
       tags.tag

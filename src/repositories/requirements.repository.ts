@@ -6,7 +6,8 @@ export const getAllRequirements = async () => {
   const [rows] = await pool.query<RowDataPacket[]>(
     `SELECT requirements.id, requirements.targetUserId, requirements.requestedBy, requirements.type, requirements.status, requirements.approvedBy, requirements.reviewed,
           requirements.createdAt, requirements.reason, requirements.oldPosition, requirements.newPosition, requirements.reasonApproval, requirements.identification,
-          
+          requirements.permission,
+
           positions.id AS positionId, positions.minimumDays, positions.positionLevel, positions.corps,
 
           targetUser.isAccountActive, targetUser.nick AS targetUserNick,
@@ -43,6 +44,7 @@ export const getRequirementByUserId = async (id: number) => {
   const [rows] = await pool.query<RowDataPacket[]>(
     `SELECT requirements.id, requirements.targetUserId, requirements.requestedBy, requirements.type, requirements.status, requirements.approvedBy, requirements.reviewed,
           requirements.createdAt, requirements.reason, requirements.oldPosition, requirements.newPosition, requirements.reasonApproval, requirements.identification,
+          requirements.permission,
           
           positions.id AS positionId, positions.minimumDays, positions.positionLevel, positions.corps,
 
@@ -80,6 +82,7 @@ export const getRequirementById = async (id: number) => {
   const [rows] = await pool.query<RowDataPacket[]>(
     `SELECT requirements.id, requirements.targetUserId, requirements.requestedBy, requirements.type, requirements.status, requirements.approvedBy, requirements.reviewed,
           requirements.createdAt, requirements.reason, requirements.oldPosition, requirements.newPosition, requirements.reasonApproval, requirements.identification,
+          requirements.permission,
           
           positions.id AS positionId, positions.minimumDays, positions.positionLevel, positions.corps,
 
