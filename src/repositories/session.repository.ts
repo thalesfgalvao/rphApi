@@ -1,4 +1,4 @@
-import { type RowDataPacket } from "mysql2";
+import { type ResultSetHeader, type RowDataPacket } from "mysql2";
 import pool from "../database/connection.js";
 
 export const saveHashedToken = async (
@@ -13,11 +13,12 @@ export const saveHashedToken = async (
   return rows;
 };
 
+// ESSE REPOSITORY DESLOGA TODAS AS CONTAS.
 export const deleteSessionByUserId = async (userId: number) => {
   const [rows] = await pool.query("DELETE FROM sessions WHERE userId = ?", [
     userId,
   ]);
-  return rows;
+  return [rows];
 };
 
 export const getSessionByHashedToken = async (tokenHash: string) => {
@@ -26,4 +27,13 @@ export const getSessionByHashedToken = async (tokenHash: string) => {
     [tokenHash],
   );
   return rows;
+};
+
+export const deleteSessionByHashedToken = async (tokenHash: string) => {
+  const [result] = await pool.execute<ResultSetHeader>(
+    `DELETE FROM sessions
+     WHERE tokenHash = ?`,
+    [tokenHash],
+  );
+  return result;
 };

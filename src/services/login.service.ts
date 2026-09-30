@@ -1,6 +1,11 @@
 import { getUserForLogin } from "../repositories/login.repository.js";
 import { randomBytes, createHash } from "node:crypto";
-import { deleteSessionByUserId, saveHashedToken } from "../repositories/session.repository.js";
+import {
+  deleteSessionByHashedToken,
+  deleteSessionByUserId,
+  getSessionByHashedToken,
+  saveHashedToken,
+} from "../repositories/session.repository.js";
 import argon2 from "argon2";
 
 export const getUserForLoginService = async (
@@ -40,5 +45,25 @@ export const getUserForLoginService = async (
     success: true,
     message: "Login realizado com sucesso.",
     token,
+  };
+};
+
+export const deleteSessionByUserIdService = async (userId: number) => {
+  await deleteSessionByUserId(userId);
+};
+
+export const deleteSessionByHashedTokenService = async (tokenHash: string) => {
+  const [session] = await getSessionByHashedToken(tokenHash);
+  if (!session) {
+    return {
+      success: false,
+      message: "Nenhuma sessão encontrada.",
+    };
+  }
+
+  await deleteSessionByHashedToken(tokenHash);
+  return {
+    success: true,
+    message: "Logout realizado com sucesso.",
   };
 };
