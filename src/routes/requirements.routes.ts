@@ -21,7 +21,7 @@ router.get("/requirement/:id", authMiddleware, getRequirementByIdController);
 router.patch(
   "/requirements/:id/approve",
   authMiddleware,
-  requireFlag("RH"),
+  requireFlag("R. Humanos"),
   approveRequirementController,
 );
 router.patch(
