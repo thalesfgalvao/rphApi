@@ -6,6 +6,7 @@ import {
   getPendingUsers,
 } from "../repositories/moderate.repository.js";
 import { getUserById } from "../repositories/user.repository.js";
+import { deleteSessionByUserIdService } from "./login.service.js";
 
 export const getPendingUsersService = async () => {
   const [response] = await getPendingUsers();
@@ -63,6 +64,7 @@ export const deactivateUserService = async (
     };
   }
   await deactivateUser(targetUserId);
+  await deleteSessionByUserIdService(targetUserId);
   await createUserMovement(targetUserId, author, action);
   return {
     success: true,
