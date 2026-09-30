@@ -10,6 +10,7 @@ import {
 } from "../repositories/requirements.repository.js";
 import { getUserById } from "../repositories/user.repository.js";
 import { formatIdentificationDate } from "../utils/date.js";
+import { deleteSessionByUserIdService } from "./login.service.js";
 import { deactivateUserService } from "./moderate.service.js";
 import {
   createPoliceRecordsService,
@@ -231,6 +232,7 @@ export const createRequirementService = async (
     newPosition = 135;
     let reformaReason = `Eu, ${requestedByUser.position} ${requestedByUser.nick}, detentor(a) da TAG [${requestedByUser.tag}], venho solicitar o meu desligamento honroso devido a ${reason}. Resguardo meu direito de poder retornar a RPH no futuro sem impedimentos.`;
     reason = `${reformaReason}`;
+    await deleteSessionByUserIdService(requestedByUser.id);
   }
   if (type === "reforma" && requestedByUser.id !== targetUser.id) {
     let date = new Date();
@@ -240,6 +242,7 @@ export const createRequirementService = async (
     newPosition = 135;
     let reformaReason = `Eu, ${requestedByUser.position} ${requestedByUser.nick}, detentor(a) da TAG [${requestedByUser.tag}], venho solicitar a reforma do(a) ${targetUser.position} ${targetUser.nick}, detentor da TAG [${targetUser.tag}] sob seu pedido.`;
     reason = `${reformaReason}`;
+    await deleteSessionByUserIdService(targetUser.id);
   }
 
   if (type === "demissao" && requestedByUser.id !== targetUser.id) {
@@ -253,6 +256,7 @@ export const createRequirementService = async (
     const demissaoReason = `Eu, ${requestedByUser.position} ${requestedByUser.nick}, detentor(a) da TAG [${requestedByUser.tag}], venho solicitar o desligamento desonroso do(a) ${targetUser.position} ${targetUser.nick}, detentor da TAG [${targetUser.tag}] devido ao motivo ${reason}. Resguardo seu direito de poder retornar a RPH no futuro sem impedimentos.`;
 
     reason = demissaoReason;
+    await deleteSessionByUserIdService(targetUser.id);
   }
   if (
     !requestedByUser.tag &&
