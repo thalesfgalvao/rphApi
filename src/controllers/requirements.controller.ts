@@ -94,7 +94,7 @@ export const createRequirementController = async (
   req: Request,
   res: Response,
 ) => {
-  const { targetUserId, type, reason } = req.body;
+  const { targetUserId, type, reason, positionId } = req.body;
   const requestedBy = req.userId;
 
   if (!requestedBy) {
@@ -108,6 +108,7 @@ export const createRequirementController = async (
     requestedBy,
     type,
     reason,
+    positionId,
   );
   return res.status(success).json(response);
 };

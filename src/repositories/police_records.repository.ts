@@ -75,3 +75,32 @@ export const updatePoliceRecords = async (
 
   return result;
 };
+
+export const giveNewPosition = async (
+  positionId: number,
+  identification: string,
+  updatedAt: Date,
+  updatedBy: number,
+  relatedRequirementId: number,
+  userId: number,
+) => {
+  const [result] = await pool.execute(
+    `UPDATE police_records
+     SET positionId = ?,
+         identification = ?,
+         updatedAt = ?,
+         updatedBy = ?,
+         relatedRequirementId = ?
+     WHERE userId = ?`,
+    [
+      positionId,
+      identification,
+      updatedAt,
+      updatedBy,
+      relatedRequirementId,
+      userId,
+    ],
+  );
+
+  return result;
+};

@@ -2,9 +2,11 @@ import {
   createPoliceRecords,
   getPoliceRecords,
   getPoliceRecordsByUserId,
+  giveNewPosition,
   updatePoliceRecords,
 } from "../repositories/police_records.repository.js";
 import { getRequirementById } from "../repositories/requirements.repository.js";
+import { getUserById } from "../repositories/user.repository.js";
 
 export const getPoliceRecordsService = async () => {
   const response = await getPoliceRecords();
@@ -75,4 +77,53 @@ export const updatePoliceRecordsService = async (
     relatedRequirementId,
     userId,
   );
+};
+
+export const giveNewPositionService = async (
+  positionId: number,
+  identification: string,
+  relatedRequirementId: number,
+  userId: number,
+  updatedBy: number,
+) => {
+  const [user] = await getUserById(userId);
+  if (!user) {
+    return {
+      success: false,
+      message: "Usuário não encontrado.",
+    };
+  }
+  const [requestedUser] = await getUserById(updatedBy);
+  if (!requestedUser) {
+    return {
+      success: false,
+      message: "Autor não encontrado.",
+    };
+  }
+  const [policeRecord] = await getPoliceRecordsByUserId(userId);
+  const updatedAt = new Date();
+
+  if (!policeRecord) {
+    await createPoliceRecords(
+      userId,
+      positionId,
+      identification,
+      updatedAt,
+      updatedBy,
+      relatedRequirementId,
+    );
+  } else {
+    await giveNewPosition(
+      positionId,
+      identification,
+      updatedAt,
+      updatedBy,
+      relatedRequirementId,
+      userId,
+    );
+  }
+  return {
+    success: true,
+    message: "Patente/cargo atualizado com sucesso.",
+  };
 };

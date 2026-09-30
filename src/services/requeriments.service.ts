@@ -1,4 +1,3 @@
-import { updatePoliceRecords } from "../repositories/police_records.repository.js";
 import {
   createRequirement,
   getAllRequirements,
@@ -10,13 +9,8 @@ import {
 } from "../repositories/requirements.repository.js";
 import { getUserById } from "../repositories/user.repository.js";
 import { formatIdentificationDate } from "../utils/date.js";
-import { deleteSessionByUserIdService } from "./login.service.js";
 import { deactivateUserService } from "./moderate.service.js";
-import {
-  createPoliceRecordsService,
-  getPoliceRecordsByUserIdService,
-  updatePoliceRecordsService,
-} from "./police_records.service.js";
+import { updatePoliceRecordsService } from "./police_records.service.js";
 
 export const getAllRequirementsService = async () => {
   const response = await getAllRequirements();
@@ -94,21 +88,12 @@ export const createRequirementService = async (
   requestedBy: number,
   type: string,
   reason: string,
+  positionId?: number,
 ) => {
-  const policeRecords = await getPoliceRecordsByUserIdService(targetUserId);
   const [targetUser] = await getUserById(targetUserId);
-  if (!policeRecords.success) {
-    await createPoliceRecordsService(
-      targetUserId,
-      0,
-      "Nick [TAG] DD MM AAAA",
-      new Date(),
-      requestedBy,
-      0,
-    );
-  }
-
-  let identification = "Nick [TAG] DD MM AAAA";
+  let identification: string | null = null;
+  let oldPosition: number | null = null;
+  let newPosition: number | null = null;
   if (!targetUser) {
     return {
       success: false,
@@ -121,7 +106,7 @@ export const createRequirementService = async (
       message: "Usuário não está ativo.",
     };
   }
-  if (targetUser.corps === "special") {
+  if (targetUser.corps === "special" && type !== "contratacao") {
     return {
       success: false,
       message: "Não é possível realizar requerimentos contra este usuário.",
@@ -142,30 +127,8 @@ export const createRequirementService = async (
     };
   }
   if (requestedByUser.corps !== "special") {
-    if (type === "promocao") {
-      if (targetUser.positionLevel + 1 >= requestedByUser.positionLevel) {
-        return {
-          success: false,
-          message: "Essa ação só pode ser feita com subalternos.",
-        };
-      }
-    }
-
-    if (type === "rebaixamento" || type === "demissao") {
-      if (targetUser.positionLevel >= requestedByUser.positionLevel) {
-        return {
-          success: false,
-          message: "Essa ação só pode ser feita com subalternos.",
-        };
-      }
-    }
-  }
-  let oldPosition: number | null = null;
-  let newPosition: number | null = null;
-
-  if (type === "promocao") {
     if (
-      requestedByUser.corps !== "special" &&
+      type === "promocao" &&
       targetUser.positionLevel + 1 >= requestedByUser.positionLevel
     ) {
       return {
@@ -174,6 +137,18 @@ export const createRequirementService = async (
       };
     }
 
+    if (
+      (type === "rebaixamento" || type === "demissao") &&
+      targetUser.positionLevel >= requestedByUser.positionLevel
+    ) {
+      return {
+        success: false,
+        message: "Essa ação só pode ser feita com subalternos.",
+      };
+    }
+  }
+
+  if (type === "promocao") {
     const [nextPosition] = await getPositionByLevelAndCorps(
       targetUser.positionLevel + 1,
       targetUser.corps,
@@ -186,8 +161,8 @@ export const createRequirementService = async (
       };
     }
 
-    let date = new Date();
-    let formattedData = formatIdentificationDate(date);
+    const date = new Date();
+    const formattedData = formatIdentificationDate(date);
 
     identification = `${targetUser.nick} [${requestedByUser.tag}] ${formattedData}`;
     oldPosition = targetUser.positionId;
@@ -195,16 +170,6 @@ export const createRequirementService = async (
   }
 
   if (type === "rebaixamento") {
-    if (
-      requestedByUser.corps !== "special" &&
-      targetUser.positionLevel >= requestedByUser.positionLevel
-    ) {
-      return {
-        success: false,
-        message: "Essa ação só pode ser feita com subalternos.",
-      };
-    }
-
     const [previousPosition] = await getPositionByLevelAndCorps(
       targetUser.positionLevel - 1,
       targetUser.corps,
@@ -217,35 +182,33 @@ export const createRequirementService = async (
       };
     }
 
-    let date = new Date();
-    let formattedData = formatIdentificationDate(date);
+    const date = new Date();
+    const formattedData = formatIdentificationDate(date);
 
     identification = `${targetUser.nick} [R/${requestedByUser.tag}] ${formattedData}`;
     oldPosition = targetUser.positionId;
     newPosition = previousPosition.id;
   }
-  if (type === "reforma" && requestedByUser.id === targetUser.id) {
-    let date = new Date();
-    let formattedData = formatIdentificationDate(date);
-    identification = `${requestedByUser.nick} [---] ${formattedData}`;
-    oldPosition = requestedByUser.positionId;
-    newPosition = 135;
-    let reformaReason = `Eu, ${requestedByUser.position} ${requestedByUser.nick}, detentor(a) da TAG [${requestedByUser.tag}], venho solicitar o meu desligamento honroso devido a ${reason}. Resguardo meu direito de poder retornar a RPH no futuro sem impedimentos.`;
-    reason = `${reformaReason}`;
-    await deleteSessionByUserIdService(requestedByUser.id);
-  }
-  if (type === "reforma" && requestedByUser.id !== targetUser.id) {
-    let date = new Date();
-    let formattedData = formatIdentificationDate(date);
+
+  if (type === "reforma") {
+    const date = new Date();
+    const formattedData = formatIdentificationDate(date);
+
     identification = `${targetUser.nick} [---] ${formattedData}`;
     oldPosition = targetUser.positionId;
-    newPosition = 135;
-    let reformaReason = `Eu, ${requestedByUser.position} ${requestedByUser.nick}, detentor(a) da TAG [${requestedByUser.tag}], venho solicitar a reforma do(a) ${targetUser.position} ${targetUser.nick}, detentor da TAG [${targetUser.tag}] sob seu pedido.`;
-    reason = `${reformaReason}`;
-    await deleteSessionByUserIdService(targetUser.id);
+
+    newPosition = targetUser.positionLevel > 11 ? 135 : 133;
+
+    const isOwnReforma = requestedByUser.id === targetUser.id;
+
+    if (isOwnReforma) {
+      reason = `Eu, ${requestedByUser.position} ${requestedByUser.nick}, venho solicitar o meu desligamento honroso devido a ${reason}. Resguardo meu direito de poder retornar a RPH no futuro sem impedimentos.`;
+    } else {
+      reason = `Eu, ${requestedByUser.position} ${requestedByUser.nick}, detentor(a) da TAG [${requestedByUser.tag}], venho solicitar a reforma do(a) ${targetUser.position} ${targetUser.nick}, detentor da TAG [${targetUser.tag}] sob seu pedido.`;
+    }
   }
 
-  if (type === "demissao" && requestedByUser.id !== targetUser.id) {
+  if (type === "demissao") {
     const date = new Date();
     const formattedData = formatIdentificationDate(date);
 
@@ -253,27 +216,39 @@ export const createRequirementService = async (
     oldPosition = targetUser.positionId;
     newPosition = 133;
 
-    const demissaoReason = `Eu, ${requestedByUser.position} ${requestedByUser.nick}, detentor(a) da TAG [${requestedByUser.tag}], venho solicitar o desligamento desonroso do(a) ${targetUser.position} ${targetUser.nick}, detentor da TAG [${targetUser.tag}] devido ao motivo ${reason}. Resguardo seu direito de poder retornar a RPH no futuro sem impedimentos.`;
+    reason = `Eu, ${requestedByUser.position} ${requestedByUser.nick}, detentor(a) da TAG [${requestedByUser.tag}], venho solicitar o desligamento desonroso do(a) ${targetUser.position} ${targetUser.nick}, detentor da TAG [${targetUser.tag}] devido ao motivo ${reason}. Resguardo seu direito de poder retornar a RPH no futuro sem impedimentos.`;
+  }
 
-    reason = demissaoReason;
-    await deleteSessionByUserIdService(targetUser.id);
+  if (type === "contratacao") {
+    if (targetUser.positionId === 134) {
+      return {
+        success: false,
+        message: "Usuários exonerados não podem ser contratados.",
+      };
+    }
+    if (!positionId) {
+      return {
+        success: false,
+        message: "A patente/cargo da contratação é obrigatória.",
+      };
+    }
+
+    const date = new Date();
+    const formattedData = formatIdentificationDate(date);
+
+    identification = `${targetUser.nick} [${requestedByUser.tag}] ${formattedData}`;
+    oldPosition = targetUser.positionId;
+    newPosition = positionId;
+    reason = "Contratação.";
   }
-  if (
-    !requestedByUser.tag &&
-    type !== "reforma" &&
-    requestedByUser.id === targetUser.id
-  ) {
+
+  if (!identification) {
     return {
       success: false,
-      message: "Você precisa de uma TAG ativa.",
+      message: "Não foi possível gerar a identificação do requerimento.",
     };
   }
-  if (!requestedByUser.tag) {
-    return {
-      success: false,
-      message: "Você precisa de uma TAG ativa.",
-    };
-  }
+
   await createRequirement(
     targetUserId,
     requestedBy,

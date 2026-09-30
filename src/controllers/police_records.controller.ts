@@ -3,6 +3,7 @@ import {
   createPoliceRecordsService,
   getPoliceRecordsByUserIdService,
   getPoliceRecordsService,
+  giveNewPositionService,
   updatePoliceRecordsService,
 } from "../services/police_records.service.js";
 import { http } from "../constants/httpStatus.js";
@@ -54,8 +55,35 @@ export const updatePoliceRecordsController = async (
   res: Response,
 ) => {
   const requirementId = Number(req.params.requirementId);
-
   const response = await updatePoliceRecordsService(requirementId);
+  return res.status(success).json(response);
+};
+
+export const giveNewPositionController = async (
+  req: Request,
+  res: Response,
+) => {
+  const userId = Number(req.params.userId);
+  const updatedBy = req.userId;
+
+  const { positionId, identification } = req.body;
+
+  if (!updatedBy) {
+    return res.status(unauthorized).json({
+      success: false,
+      message: "Não autorizado.",
+    });
+  }
+
+  const relatedRequirementId = 0;
+
+  const response = await giveNewPositionService(
+    positionId,
+    identification,
+    relatedRequirementId,
+    userId,
+    updatedBy,
+  );
 
   return res.status(success).json(response);
 };
