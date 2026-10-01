@@ -1,3 +1,4 @@
+import { createPoliceRecords } from "../repositories/police_records.repository.js";
 import {
   getUserById,
   createUser,
@@ -50,6 +51,24 @@ export const createUserService = async (
   }
   const hashedPassword = await argon2.hash(password);
   await createUser(nick, email, hashedPassword);
+  const [user] = await getUserByNick(nick);
+
+  if (!user) {
+    return {
+      success: false,
+      message: "Usuário não foi criado.",
+    };
+  }
+
+  const updatedAt = new Date();
+  await createPoliceRecords(
+    user.id,
+    133,
+    `${user.nick} [TAG] DD MM AA`,
+    updatedAt,
+    user.id,
+    0,
+  );
   return {
     success: true,
     message: `O usuário ${nick} foi criado com êxito.`,
